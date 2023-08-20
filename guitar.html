@@ -1,0 +1,191 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Practice #</title>
+<!--Random Combine-->
+<!--Randomly combines (pairs) items from two comma delimited strings-->
+<!--of text N times without duplicates-->
+<!--Default strings:-->
+<!--A,Bb,B,C,C#,Db,D,Eb,E,F,F#,G,Ab-->
+<!--Maj,Min,MA Ionian,MA Lydian,MA Mixolydian,MI Dorian,MI Phrygian,MI Aeolian-->
+<style type="text/css">
+	body {
+		font: normal 14pt monospace;
+	}
+
+	table, th, td {
+		border: 1px solid black;
+		padding: 2px;
+		border-collapse:collapse;
+		text-align: center;
+	}
+</style>
+
+<script type="text/javascript">
+
+const modes 	= "MAJ,MIN,MA Ionian,MA Lydian,MA Mixolydian,MI Dorian,MI Phrygian,MI Aeolian";
+const mascale = ["A","Bb","B","C","C#","Db","D","Eb","E","F","F#","G","Ab"];
+const miscale = ["F#m","Gm","G#m","Am","A#m","Bbm","Bm","Cm","C#m","Dm","D#m","Em","Fm"];
+const maprogs = ["I-IV-V","I-vi-IV-V","I-V","I-IV-I-V","I-V-vi-IV","vi-IV-I-V","ii-V-I","I-vi-ii-V","ii-vii°-I"];
+const miprogs = ["i-VI-VII","i-iv-VII","i-iv-v","i-VI-III-VII","ii°-v-i"];
+const maxprog = ["I","ii","iii","IV","V","vi","vii°"]; // major scale tones
+const mixprog = ["i","ii°","III","iv","v","VI","VII"]; // minor scale tones
+const ornaments = "(hammer-on),(pull-off),(slide),(trill),(bends),(vibrato)";
+
+var scaleInx = 0; // index to the scale array - used for progression chord names
+
+var Keyma = [
+	{ name:"A", scale: ["A", "Bm", "C<sup>#</sup>m", "D", "E", "F<sup>#</sup>m", "G<sup>#(m7b5)</sup>"] },
+	{ name:"Bb", scale: ["B<sup>b</sup>", "Cm", "Dm", "E<sup>b</sup>", "F", "Gm", "A<sup>(m7b5)</sup>"] },
+	{ name:"B", scale: ["B", "C<sup>#</sup>m", "D<sup>#</sup>m", "E", "F<sup>#</sup>", "G<sup>#</sup>m", "A<sup>#</sup><sup>(m7b5)</sup>"] },
+	{ name:"C", scale: ["C", "Dm", "Em", "F", "G", "Am", "B<sup>(m7b5)</sup>"] },
+	{ name:"C#", scale: ["C<sup>#</sup>", "Dm<sup>#</sup>", "Em<sup>#</sup>", "F<sup>#</sup>", "G<sup>#</sup>", "Am<sup>#</sup>", "B<sup>#</sup><sup>(m7b5)</sup>"] },
+	{ name:"Db", scale: ["D<sup>b</sup>", "E<sup>b</sup>m", "Fm", "G<sup>b</sup>", "A<sup>b</sup>", "B<sup>b</sup>m", "C<sup>(m7b5)</sup>"] },
+	{ name:"D", scale: ["D", "Em", "F<sup>#</sup>m", "G", "A", "Bm", "C<sup>#(m7b5)</sup>"] },
+	{ name:"Eb", scale: ["E<sup>b</sup>", "Fm", "Gm", "A<sup>b</sup>", "B<sup>b</sup>", "Cm", "D<sup>(m7b5)</sup>"] },
+	{ name:"E", scale: ["E", "F<sup>#</sup>m", "G<sup>#</sup>m", "A", "B", "C<sup>#</sup>m", "D<sup>#(m7b5)</sup>"] },
+	{ name:"F", scale: ["F", "Gm", "Am", "B<sup>b</sup>", "C", "Dm", "E<sup>(m7b5)</sup>"] },
+	{ name:"F#", scale: ["F<sup>#</sup>", "G<sup>#</sup>m", "A<sup>#</sup>m", "B", "C<sup>#</sup>", "D<sup>#</sup>m", "E<sup>#(m7b5)</sup>"] },
+	{ name:"G", scale: ["G", "Am", "Bm", "C", "D", "Em", "F<sup>#(m7b5)</sup>"] },
+	{ name:"Ab", scale: ["A<sup>b</sup>", "B<sup>b</sup>m", "Cm", "D<sup>b</sup>", "E<sup>b</sup>", "Fm", "G<sup>(m7b5)</sup>"] }
+];
+var Keymi = [
+	{ name:"F#m", scale: ["F<sup>#</sup>m", "G<sup>#(m7b5)</sup>", "A", "Bm", "C<sup>#</sup>m", "D", "E"] },
+	{ name:"Gm", scale: ["Gm", "A<sup>(m7b5)</sup>", "B<sup>b</sup>", "Cm", "Dm", "E<sup>b</sup>", "F"] },
+	{ name:"G#m", scale: ["G<sup>#</sup>m", "A<sup>#</sup><sup>(m7b5)</sup>", "B", "C<sup>#</sup>m", "D<sup>#</sup>m", "E", "F<sup>#</sup>"] },
+	{ name:"Am", scale: ["Am", "B<sup>(m7b5)</sup>", "C", "Dm", "Em", "F", "G"] },
+	{ name:"A#m", scale: ["Am<sup>#</sup>", "B<sup>#</sup><sup>(m7b5)</sup>", "C<sup>#</sup>", "Dm<sup>#</sup>", "Em<sup>#</sup>", "F<sup>#</sup>", "G<sup>#</sup>"] },
+	{ name:"Bbm", scale: ["B<sup>b</sup>m", "C<sup>(m7b5)</sup>", "D<sup>b</sup>", "E<sup>b</sup>m", "Fm", "G<sup>b</sup>", "A<sup>b</sup>"] },
+	{ name:"Bm", scale: ["Bm", "C<sup>#(m7b5)</sup>", "D", "Em", "F<sup>#</sup>m", "G", "A"] },
+	{ name:"Cm", scale: ["Cm", "D<sup>(m7b5)</sup>", "E<sup>b</sup>", "Fm", "Gm", "A<sup>b</sup>", "B<sup>b</sup>"] },
+	{ name:"C#m", scale: ["C<sup>#</sup>m", "D<sup>#(m7b5)</sup>", "E", "F<sup>#</sup>m", "G<sup>#</sup>m", "A", "B"] },
+	{ name:"Dm", scale: ["Dm", "E<sup>(m7b5)</sup>", "F", "Gm", "Am", "B<sup>b</sup>", "C"] },
+	{ name:"D#m", scale: ["D<sup>#</sup>m", "E<sup>#(m7b5)</sup>", "F<sup>#</sup>", "G<sup>#</sup>m", "A<sup>#</sup>m", "B", "C<sup>#</sup>"] },
+	{ name:"Em", scale: ["Em", "F<sup>#(m7b5)</sup>", "G", "Am", "Bm", "C", "D"] },
+	{ name:"Fm", scale: ["Fm", "G<sup>(m7b5)</sup>", "A<sup>b</sup>", "B<sup>b</sup>m", "Cm", "D<sup>b</sup>", "E<sup>b</sup>"] }
+];
+
+function procombine()
+{
+	var amodes = [];
+	var aornas = [];
+	var nbr = 1;
+	var melody = 1;
+	var sline	= "<table>";
+	var x = 0;
+	var mlen = 0;
+	var olen = 0;
+	var m1 = 0;
+	var s1 = 0;
+	var o1 = 0;
+	var sout = "";
+  var chords = "";
+  var aprog = "";
+  var scale = "";
+
+	// assign the output size variable
+	nbr = document.getElementById("NC").value;
+
+	// Create arrays and length vars
+	amodes = modes.split(",");
+	mlen = amodes.length;
+	aornas = ornaments.split(",");
+	olen = aornas.length;
+
+
+	// build the random practice lines
+
+	for (tx=0; tx < nbr; tx++) {
+		m1 = Math.floor((Math.random() * mlen) + 0);	 // index of random mode for this line
+		s1 = Math.floor((Math.random() * 13) + 0);		// index of random interval of scale
+	 	ma = Math.floor((Math.random() * 9) + 0);		 // index of MAJOR chord progression
+	 	mi = Math.floor((Math.random() * 5) + 0);		// index of MINOR chord progression
+		o1 = Math.floor((Math.random() * olen) + 0); // index of ornament to practice
+	//	melody = Math.floor((Math.random() * 9) + 3);	// number of notes for melody
+
+		if (amodes[m1].startsWith("MA")) {  // decide major or minor scale tone
+		  skey = mascale[s1];
+      chords = maprogs[ma];
+      aprog = chords.split("-");
+      scale = findScale(skey, Keyma);
+      ascale = Keyma[scaleInx].scale;  // scaleInx (global) set in findScale function
+			sout = td(skey) + td(amodes[m1]);	// it's MInor
+      sprog = "";
+      for (x=0; x < aprog.length; x++) {
+        sprog = sprog + ascale[maxprog.indexOf(aprog[x])] + " ";
+      }
+			sout += td(scale) + td( chords ) + td(sprog) + td(aornas[o1]);
+		} else {
+		  skey = miscale[s1];
+      chords = miprogs[mi];
+      aprog = chords.split("-");
+      scale = findScale(skey, Keymi);
+      ascale = Keymi[scaleInx].scale;  // scaleInx set in findScale function
+			sout = td(skey) + td(amodes[m1]);	// it's MInor
+      sprog = "";
+      for (x=0; x < aprog.length; x++) {
+        sprog = sprog + ascale[mixprog.indexOf(aprog[x])] + " ";
+      }
+			sout += td(scale) + td( chords ) + td(sprog) + td(aornas[o1]);
+		}
+
+		sline += "<tr>" + sout + "</tr>\n";
+	}
+
+	document.getElementById('results').innerHTML = sline + "</table>";			// display output
+
+}
+
+//////////////////////////////////////////////
+function td(s) {
+	return "<td>" + s + "</td>";
+}
+
+function findScale(skey, Key) {
+	var inx = 0;
+	skey = skey.trim();
+	for (inx=0; inx < Key.length; inx++) {
+		if (Key[inx].name == skey) {
+		  scaleInx = inx;
+			return Key[inx].scale.toString().replace(/,/g,'|');
+		}
+	}
+	return "Scale not found " + skey;
+}
+
+</script>
+
+</head>
+
+<body>
+<h2>Practice _________________</h2>
+<small>
+(v2.0) Randomly combines a Maj or Min key with a <br>
+random MA/MI mode, scale, progression, and ornament.
+</small>
+<br><br>
+
+<table>
+	<tr>
+		<td align="right">
+		Number of sessions:
+		</td>
+		<td>
+		&nbsp;&nbsp;<input type="text" id="NC" name="NC" size="3" value="28" />&nbsp;&nbsp;
+		</td>
+		<td align="right">
+		&nbsp;<input type="button" value="RUN" onclick="procombine()" />&nbsp;
+		</td>
+	</tr>
+</table>
+
+<br clear="all" /><br />
+
+<div style="margin-left:30px;font: normal 14pt/20pt monospace;">
+<a id="results"></a>
+</div>
+
+<br />
+</body>
+</html>
